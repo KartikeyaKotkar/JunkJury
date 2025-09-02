@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Waste Classifier</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Smart Waste Classifier ♻️</h1>
+        <p>Upload an image of waste, and the AI will classify it for you.</p>
+
+        <div class="classifier-box">
+            <input type="file" id="imageUpload" accept="image/*">
+            <label for="imageUpload" class="upload-button">Choose Image</label>
+
+            <div id="imagePreviewContainer" class="image-preview-container">
+                <img id="imagePreview" src="#" alt="Image Preview" class="image-preview"/>
+            </div>
+
+            <button id="predictButton">Classify</button>
+
+            <div id="result" class="result">
+                </div>
+        </div>
+    </div>
+
+    <script>
+        const imageUpload = document.getElementById('imageUpload');
+        const imagePreview = document.getElementById('imagePreview');
+        const imagePreviewContainer = document.getElementById('imagePreviewContainer');
+        const predictButton = document.getElementById('predictButton');
+        const resultDiv = document.getElementById('result');
+
+        imageUpload.addEventListener('change', function() {
+            if (this.files && this.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    imagePreview.src = e.target.result;
+                    imagePreviewContainer.style.display = 'block';
+                    resultDiv.innerHTML = ''; // Clear previous result
+                };
+                reader.readAsDataURL(this.files[0]);
+            }
+        });
+
+        predictButton.addEventListener('click', function() {
+            const file = imageUpload.files[0];
+            if (!file) {
+                alert("Please select an image first!");
+                return;
+            }
+
+            resultDiv.innerHTML = 'Classifying... 🤔';
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            fetch('/predict', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    resultDiv.innerHTML = `<span class="error">Error: ${data.error}</span>`;
+                } else {
+                    resultDiv.innerHTML = `Prediction: <strong>${data.prediction}</strong> <br> Confidence: ${data.confidence}`;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                resultDiv.innerHTML = `<span class="error">An error occurred. See console for details.</span>`;
+            });
+        });
+    </script>
+</body>
+</html>

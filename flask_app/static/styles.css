@@ -1,0 +1,101 @@
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: #f4f7f6;
+    color: #333;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+}
+
+.container {
+    text-align: center;
+    background: white;
+    padding: 2rem 3rem;
+    border-radius: 15px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+h1 {
+    color: #00796b;
+    margin-bottom: 0.5rem;
+}
+
+p {
+    color: #555;
+    margin-bottom: 2rem;
+}
+
+.classifier-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+.upload-button {
+    background-color: #00796b;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.3s;
+}
+
+.upload-button:hover {
+    background-color: #004d40;
+}
+
+input[type="file"] {
+    display: none;
+}
+
+.image-preview-container {
+    display: none;
+    margin-top: 1rem;
+    border: 2px dashed #ddd;
+    padding: 10px;
+    border-radius: 10px;
+    width: 250px;
+    height: 250px;
+}
+
+.image-preview {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: cover;
+    border-radius: 5px;
+}
+
+#predictButton {
+    background-color: #f57c00;
+    color: white;
+    padding: 12px 25px;
+    border: none;
+    border-radius: 5px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    margin-top: 1rem;
+}
+
+#predictButton:hover {
+    background-color: #e65100;
+}
+
+.result {
+    margin-top: 1.5rem;
+    font-size: 1.2rem;
+    color: #004d40;
+}
+
+.result strong {
+    font-size: 1.5rem;
+}
+
+.error {
+    color: #d32f2f;
+}
