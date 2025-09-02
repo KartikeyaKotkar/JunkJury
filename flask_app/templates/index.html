@@ -7,60 +7,113 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
-    <div class="container">
-        <h1>Smart Waste Classifier ♻️</h1>
-        <p>Upload an image of waste, and the AI will classify it for you.</p>
+<div class="container">
+    <h1>Smart Waste Classifier ♻️</h1>
+    <p>Upload, Drag & Drop, or Paste an image to classify.</p>
 
-        <div class="classifier-box">
-            <input type="file" id="imageUpload" accept="image/*">
-            <label for="imageUpload" class="upload-button">Choose Image</label>
+    <div class="classifier-box">
+        <!-- Hidden file input -->
+        <input type="file" id="imageUpload" accept="image/*" hidden>
+        <label for="imageUpload" class="upload-button">Choose Image</label>
 
-            <div id="imagePreviewContainer" class="image-preview-container">
-                <img id="imagePreview" src="#" alt="Image Preview" class="image-preview"/>
-            </div>
-
-            <button id="predictButton">Classify</button>
-
-            <div id="result" class="result">
-                </div>
+        <!-- Drag and drop area -->
+        <div id="dropArea" class="drop-area">
+            <p>Drag & Drop or Paste an Image Here 📸</p>
         </div>
+
+        <!-- Preview section -->
+        <div id="imagePreviewContainer" class="image-preview-container" style="display: none;">
+            <img id="imagePreview" src="#" alt="Image Preview" class="image-preview"/>
+        </div>
+
+        <!-- Action button -->
+        <button id="predictButton">Classify</button>
+
+        <!-- Result section -->
+        <div id="result" class="result"></div>
     </div>
+</div>
 
-    <script>
-        const imageUpload = document.getElementById('imageUpload');
-        const imagePreview = document.getElementById('imagePreview');
-        const imagePreviewContainer = document.getElementById('imagePreviewContainer');
-        const predictButton = document.getElementById('predictButton');
-        const resultDiv = document.getElementById('result');
+<script>
+    const imageUpload = document.getElementById('imageUpload');
+    const imagePreview = document.getElementById('imagePreview');
+    const imagePreviewContainer = document.getElementById('imagePreviewContainer');
+    const predictButton = document.getElementById('predictButton');
+    const resultDiv = document.getElementById('result');
+    const dropArea = document.getElementById('dropArea');
 
-        imageUpload.addEventListener('change', function() {
-            if (this.files && this.files[0]) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    imagePreview.src = e.target.result;
-                    imagePreviewContainer.style.display = 'block';
-                    resultDiv.innerHTML = ''; // Clear previous result
-                };
-                reader.readAsDataURL(this.files[0]);
+    let selectedFile = null;
+
+    // Helper: Preview the image
+    function showPreview(file) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            imagePreview.src = e.target.result;
+            imagePreviewContainer.style.display = 'block';
+            resultDiv.innerHTML = '';
+        };
+        reader.readAsDataURL(file);
+    }
+
+    // Handle standard file selection
+    imageUpload.addEventListener('change', function () {
+        if (this.files && this.files[0]) {
+            selectedFile = this.files[0];
+            showPreview(selectedFile);
+        }
+    });
+
+    // Drag & Drop functionality
+    dropArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropArea.classList.add('dragover');
+    });
+
+    dropArea.addEventListener('dragleave', () => {
+        dropArea.classList.remove('dragover');
+    });
+
+    dropArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropArea.classList.remove('dragover');
+        const file = e.dataTransfer.files[0];
+        if (file && file.type.startsWith('image/')) {
+            selectedFile = file;
+            showPreview(selectedFile);
+        } else {
+            alert('Please drop a valid image file.');
+        }
+    });
+
+    // Clipboard paste support
+    document.addEventListener('paste', (e) => {
+        const items = e.clipboardData.items;
+        for (const item of items) {
+            if (item.type.startsWith('image/')) {
+                const file = item.getAsFile();
+                selectedFile = file;
+                showPreview(selectedFile);
+                break;
             }
-        });
+        }
+    });
 
-        predictButton.addEventListener('click', function() {
-            const file = imageUpload.files[0];
-            if (!file) {
-                alert("Please select an image first!");
-                return;
-            }
+    // Predict button handler
+    predictButton.addEventListener('click', function () {
+        if (!selectedFile) {
+            alert("Please select, drop, or paste an image first!");
+            return;
+        }
 
-            resultDiv.innerHTML = 'Classifying... 🤔';
+        resultDiv.innerHTML = 'Classifying... 🤔';
 
-            const formData = new FormData();
-            formData.append('file', file);
+        const formData = new FormData();
+        formData.append('file', selectedFile);
 
-            fetch('/predict', {
-                method: 'POST',
-                body: formData
-            })
+        fetch('/predict', {
+            method: 'POST',
+            body: formData
+        })
             .then(response => response.json())
             .then(data => {
                 if (data.error) {
@@ -73,7 +126,7 @@
                 console.error('Error:', error);
                 resultDiv.innerHTML = `<span class="error">An error occurred. See console for details.</span>`;
             });
-        });
-    </script>
+    });
+</script>
 </body>
 </html>
