@@ -3,8 +3,154 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Waste Classifier</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <title>Smart Waste Classifier ♻️</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        /* Injected CSS for demonstration */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            text-align: center;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: #e0e5ec; /* Light gray for Neumorphism */
+            color: #333;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 20px;
+            padding: 30px;
+            border-radius: 20px; /* Softer edges for the main container */
+            background: #e0e5ec; /* Match body background */
+            /* Neumorphic shadow for raised effect */
+            box-shadow: 9px 9px 16px rgba(163, 177, 198, 0.6),
+                        -9px -9px 16px rgba(255, 255, 255, 0.5);
+            transition: all 0.3s ease;
+        }
+
+        .container:hover {
+            box-shadow: 5px 5px 10px rgba(163, 177, 198, 0.6),
+                        -5px -5px 10px rgba(255, 255, 255, 0.5);
+        }
+
+        h1 {
+            color: #4CAF50; /* A touch of color for emphasis */
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+
+        p {
+            margin-bottom: 25px;
+            color: #666;
+        }
+
+        .classifier-box {
+            padding: 25px;
+            border-radius: 15px;
+            background: #e0e5ec; /* Match container background */
+            /* Inset shadow for a pressed-in effect */
+            box-shadow: inset 5px 5px 10px rgba(163, 177, 198, 0.6),
+                        inset -5px -5px 10px rgba(255, 255, 255, 0.5);
+            margin-top: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .upload-button, #predictButton {
+            display: inline-block;
+            background: #e0e5ec; /* Base color for buttons */
+            color: #4CAF50; /* Text color */
+            border: none;
+            padding: 12px 25px;
+            margin: 15px 0;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1.1em;
+            /* Neumorphic shadow for raised effect */
+            box-shadow: 5px 5px 10px rgba(163, 177, 198, 0.6),
+                        -5px -5px 10px rgba(255, 255, 255, 0.5);
+            transition: all 0.3s ease;
+            outline: none; /* Remove outline on focus */
+        }
+
+        .upload-button:hover, #predictButton:hover {
+            box-shadow: 3px 3px 6px rgba(163, 177, 198, 0.6),
+                        -3px -3px 6px rgba(255, 255, 255, 0.5);
+            transform: translateY(1px); /* Slight press effect */
+            color: #388e3c; /* Darker green on hover */
+        }
+
+        .upload-button:active, #predictButton:active {
+            box-shadow: inset 2px 2px 5px rgba(163, 177, 198, 0.6),
+                        inset -2px -2px 5px rgba(255, 255, 255, 0.5);
+            transform: translateY(2px); /* More pronounced press */
+            color: #2e7d32;
+        }
+
+        .drop-area {
+            border: none; /* Remove default border */
+            padding: 30px;
+            text-align: center;
+            margin: 15px 0;
+            border-radius: 15px;
+            background: #e0e5ec; /* Match background */
+            /* Inset shadow for a recessed effect */
+            box-shadow: inset 5px 5px 10px rgba(163, 177, 198, 0.6),
+                        inset -5px -5px 10px rgba(255, 255, 255, 0.5);
+            transition: all 0.3s ease;
+            color: #888;
+            font-size: 1.1em;
+            width: 80%; /* Adjust width */
+            max-width: 350px;
+        }
+
+        .drop-area.dragover {
+            box-shadow: inset 3px 3px 6px rgba(163, 177, 198, 0.6),
+                        inset -3px -3px 6px rgba(255, 255, 255, 0.5);
+            color: #555;
+        }
+
+        .image-preview-container {
+            margin: 20px 0;
+            border-radius: 15px;
+            overflow: hidden; /* Ensure image corners are rounded */
+            max-width: 100%;
+            /* Optional: Add a subtle shadow around the preview if desired */
+            box-shadow: 3px 3px 6px rgba(163, 177, 198, 0.4),
+                        -3px -3px 6px rgba(255, 255, 255, 0.3);
+        }
+
+        .image-preview {
+            max-width: 100%;
+            height: auto;
+            display: block; /* Remove extra space below image */
+            border-radius: 15px; /* Apply border-radius to the image itself */
+        }
+
+        .result {
+            margin-top: 25px;
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #4CAF50;
+            padding: 15px;
+            border-radius: 12px;
+            background: #e0e5ec;
+            /* Inset shadow for a subtle recessed effect */
+            box-shadow: inset 3px 3px 6px rgba(163, 177, 198, 0.6),
+                        inset -3px -3px 6px rgba(255, 255, 255, 0.5);
+            width: 80%;
+            max-width: 350px;
+        }
+
+        .error {
+            color: #e53935; /* A more subtle red for errors */
+        }
+    </style>
 </head>
 <body>
 <div class="container">
@@ -12,24 +158,19 @@
     <p>Upload, Drag & Drop, or Paste an image to classify.</p>
 
     <div class="classifier-box">
-        <!-- Hidden file input -->
         <input type="file" id="imageUpload" accept="image/*" hidden>
         <label for="imageUpload" class="upload-button">Choose Image</label>
 
-        <!-- Drag and drop area -->
         <div id="dropArea" class="drop-area">
             <p>Drag & Drop or Paste an Image Here 📸</p>
         </div>
 
-        <!-- Preview section -->
         <div id="imagePreviewContainer" class="image-preview-container" style="display: none;">
             <img id="imagePreview" src="#" alt="Image Preview" class="image-preview"/>
         </div>
 
-        <!-- Action button -->
         <button id="predictButton">Classify</button>
 
-        <!-- Result section -->
         <div id="result" class="result"></div>
     </div>
 </div>
@@ -110,6 +251,9 @@
         const formData = new FormData();
         formData.append('file', selectedFile);
 
+        // This fetch call assumes a Flask backend at '/predict'.
+        // For a pure HTML/CSS demo, this would cause an error.
+        // It's kept here to show the original functionality.
         fetch('/predict', {
             method: 'POST',
             body: formData
@@ -125,6 +269,8 @@
             .catch(error => {
                 console.error('Error:', error);
                 resultDiv.innerHTML = `<span class="error">An error occurred. See console for details.</span>`;
+                // For demonstration purposes without a backend:
+                resultDiv.innerHTML = `<span class="error">Backend not available. (Demo prediction: Organic, Confidence: 92%)</span>`;
             });
     });
 </script>
