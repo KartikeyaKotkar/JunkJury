@@ -1,81 +1,98 @@
 import os
 import shutil
 import random
+from pathlib import Path
+import logging
 
+# --- Setup Logging ---
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-def split_data(source_dir, train_dir, val_dir, test_dir, split_ratio=(0.7, 0.15, 0.15)):
+def split_data(source_dir: Path, train_dir: Path, val_dir: Path, test_dir: Path, split_ratio: tuple = (0.7, 0.15, 0.15)):
     """
-    Splits the data from the source directory into training, validation, and test sets.
+    Splits image data from a source directory into training, validation, and test sets.
 
     Args:
-        source_dir (str): Path to the source directory containing class subdirectories.
-        train_dir (str): Path to the training directory.
-        val_dir (str): Path to the validation directory.
-        test_dir (str): Path to the test directory.
-        split_ratio (tuple): A tuple containing the split ratios for train, val, and test.
+        source_dir (Path): Path to the source directory containing class subdirectories.
+        train_dir (Path): Path to the training directory.
+        val_dir (Path): Path to the validation directory.
+        test_dir (Path): Path to the test directory.
+        split_ratio (tuple): A tuple with split ratios for train, val, and test.
     """
-    if not os.path.exists(source_dir):
-        print(f"Error: Source directory '{source_dir}' does not exist.")
-        return
+    try:
+        if not source_dir.is_dir():
+            logging.error(f"Source directory '{source_dir}' not found or is not a directory.")
+            return
 
-    # Create destination directories if they don't exist
-    for directory in [train_dir, val_dir, test_dir]:
-        if not os.path.exists(directory):
-            os.makedirs(directory)
+        # Create destination directories
+        for directory in [train_dir, val_dir, test_dir]:
+            directory.mkdir(parents=True, exist_ok=True)
 
-    # Get class names from the subdirectories in the source folder
-    classes = [d for d in os.listdir(source_dir) if os.path.isdir(os.path.join(source_dir, d))]
+        # Get class names from subdirectories
+        classes = [d.name for d in source_dir.iterdir() if d.is_dir()]
+        if not classes:
+            logging.warning(f"No subdirectories (classes) found in '{source_dir}'.")
+            return
 
-    for cls in classes:
-        print(f"Processing class: {cls}")
-        src_cls_path = os.path.join(source_dir, cls)
+        logging.info(f"Found classes: {classes}")
 
-        # Create class subdirectories in train, val, and test folders
-        train_cls_path = os.path.join(train_dir, cls)
-        val_cls_path = os.path.join(val_dir, cls)
-        test_cls_path = os.path.join(test_dir, cls)
-        os.makedirs(train_cls_path, exist_ok=True)
-        os.makedirs(val_cls_path, exist_ok=True)
-        os.makedirs(test_cls_path, exist_ok=True)
+        for cls in classes:
+            logging.info(f"Processing class: {cls}")
+            src_cls_path = source_dir / cls
 
-        # Get list of all images and shuffle it
-        all_files = os.listdir(src_cls_path)
-        random.shuffle(all_files)
+            # Create class subdirectories in destination folders
+            train_cls_path = train_dir / cls
+            val_cls_path = val_dir / cls
+            test_cls_path = test_dir / cls
+            train_cls_path.mkdir(exist_ok=True)
+            val_cls_path.mkdir(exist_ok=True)
+            test_cls_path.mkdir(exist_ok=True)
 
-        # Calculate split indices
-        total_files = len(all_files)
-        train_split_idx = int(total_files * split_ratio[0])
-        val_split_idx = int(total_files * (split_ratio[0] + split_ratio[1]))
+            # Get and shuffle all image files
+            all_files = [f for f in src_cls_path.iterdir() if f.is_file()]
+            random.shuffle(all_files)
 
-        # Get the lists of files for each set
-        train_files = all_files[:train_split_idx]
-        val_files = all_files[train_split_idx:val_split_idx]
-        test_files = all_files[val_split_idx:]
+            # Calculate split indices
+            total_files = len(all_files)
+            if total_files == 0:
+                logging.warning(f"No files found in class directory: {src_cls_path}")
+                continue
 
-        # Function to copy files
-        def copy_files(files, dest_path):
-            for file_name in files:
-                shutil.copy(os.path.join(src_cls_path, file_name), os.path.join(dest_path, file_name))
+            train_split_idx = int(total_files * split_ratio[0])
+            val_split_idx = int(total_files * (split_ratio[0] + split_ratio[1]))
 
-        # Copy files to their respective directories
-        copy_files(train_files, train_cls_path)
-        copy_files(val_files, val_cls_path)
-        copy_files(test_files, test_cls_path)
+            # Get file lists for each set
+            train_files = all_files[:train_split_idx]
+            val_files = all_files[train_split_idx:val_split_idx]
+            test_files = all_files[val_split_idx:]
 
-        print(f"  - Train: {len(train_files)}, Validation: {len(val_files)}, Test: {len(test_files)}")
+            # Copy files
+            def copy_files(files: list[Path], dest_path: Path):
+                for file_path in files:
+                    shutil.copy(file_path, dest_path / file_path.name)
 
-    print("\nData splitting complete! ✨")
+            copy_files(train_files, train_cls_path)
+            copy_files(val_files, val_cls_path)
+            copy_files(test_files, test_cls_path)
+
+            logging.info(f"  - Train: {len(train_files)}, Validation: {len(val_files)}, Test: {len(test_files)}")
+
+        logging.info("Data splitting complete! ✨")
+
+    except Exception as e:
+        logging.error(f"An error occurred during data splitting: {e}", exc_info=True)
 
 
 if __name__ == '__main__':
     # --- Configuration ---
-    SOURCE_DIRECTORY = 'trashnet_dataset'  # The directory with your raw class folders
-    BASE_DEST_DIRECTORY = 'data'  # A new folder to hold the split data
+    SOURCE_DIRECTORY = Path('trashnet_dataset')  # Source directory with raw class folders
+    BASE_DEST_DIRECTORY = Path('data')          # Destination for split data
 
-    TRAIN_PATH = os.path.join(BASE_DEST_DIRECTORY, 'train')
-    VALIDATION_PATH = os.path.join(BASE_DEST_DIRECTORY, 'validation')
-    TEST_PATH = os.path.join(BASE_DEST_DIRECTORY, 'test')
+    TRAIN_PATH = BASE_DEST_DIRECTORY / 'train'
+    VALIDATION_PATH = BASE_DEST_DIRECTORY / 'validation'
+    TEST_PATH = BASE_DEST_DIRECTORY / 'test'
 
-    # Run the function
-    # We use a 70% training, 15% validation, 15% testing split
-    split_data(SOURCE_DIRECTORY, TRAIN_PATH, VALIDATION_PATH, TEST_PATH)
+    # Define the split ratio
+    SPLIT_RATIO = (0.7, 0.15, 0.15)
+
+    # Run the data splitting function
+    split_data(SOURCE_DIRECTORY, TRAIN_PATH, VALIDATION_PATH, TEST_PATH, split_ratio=SPLIT_RATIO)
