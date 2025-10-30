@@ -4,3 +4,4 @@ flask
 Pillow
 numpy
 gunicorn
+logging
