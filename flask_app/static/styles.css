@@ -1,14 +1,28 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap");
+
+@keyframes gradientAnimation {
+    0% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0% 50%;
+    }
+}
 
 body {
-    font-family: 'Poppins', sans-serif;
+    font-family: "Poppins", sans-serif;
     text-align: center;
     margin: 0;
     display: flex;
     justify-content: center;
     align-items: center;
     min-height: 100vh;
-    background: linear-gradient(to right, #6a11cb, #2575fc);
+    background: linear-gradient(to right, #4caf50, #81c784, #a5d6a7);
+    background-size: 200% 200%;
+    animation: gradientAnimation 15s ease infinite;
     color: #fff;
 }
 
@@ -47,9 +61,10 @@ p {
     align-items: center;
 }
 
-.upload-button, #predictButton {
+.upload-button,
+#predictButton {
     display: inline-block;
-    background: linear-gradient(to right, #da22ff, #9733ee);
+    background: linear-gradient(to right, #43a047, #66bb6a);
     color: #fff;
     border: none;
     padding: 15px 30px;
@@ -63,12 +78,14 @@ p {
     outline: none;
 }
 
-.upload-button:hover, #predictButton:hover {
+.upload-button:hover,
+#predictButton:hover {
     transform: translateY(-3px);
     box-shadow: 0 6px 20px 0 rgba(0, 0, 0, 0.3);
 }
 
-.upload-button:active, #predictButton:active {
+.upload-button:active,
+#predictButton:active {
     transform: translateY(1px);
     box-shadow: 0 2px 10px 0 rgba(0, 0, 0, 0.2);
 }
@@ -121,7 +138,7 @@ p {
 
 .result strong {
     font-weight: 700;
-    color: #f09;
+    color: #1b5e20;
 }
 
 .error {

@@ -1,135 +1,175 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Waste Classifier ♻️</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
-</head>
-<body>
-<div class="container">
-    <h1>Smart Waste Classifier ♻️</h1>
-    <p>Upload, Drag & Drop, or Paste an image to classify.</p>
-
-    <div class="classifier-box">
-        <input type="file" id="imageUpload" accept="image/*" hidden>
-        <label for="imageUpload" class="upload-button">Choose Image</label>
-
-        <div id="dropArea" class="drop-area">
-            <p>Drag & Drop or Paste an Image Here 📸</p>
-        </div>
-
-        <div id="imagePreviewContainer" class="image-preview-container" style="display: none;">
-            <img id="imagePreview" src="#" alt="Image Preview" class="image-preview"/>
-        </div>
-
-        <button id="predictButton">Classify</button>
-
-        <div id="result" class="result"></div>
-    </div>
-</div>
-
-<script>
-    const imageUpload = document.getElementById('imageUpload');
-    const imagePreview = document.getElementById('imagePreview');
-    const imagePreviewContainer = document.getElementById('imagePreviewContainer');
-    const predictButton = document.getElementById('predictButton');
-    const resultDiv = document.getElementById('result');
-    const dropArea = document.getElementById('dropArea');
-
-    let selectedFile = null;
-
-    // Helper: Preview the image
-    function showPreview(file) {
-        const reader = new FileReader();
-        reader.onload = function (e) {
-            imagePreview.src = e.target.result;
-            imagePreviewContainer.style.display = 'block';
-            resultDiv.innerHTML = '';
-        };
-        reader.readAsDataURL(file);
-    }
-
-    // Handle standard file selection
-    imageUpload.addEventListener('change', function () {
-        if (this.files && this.files[0]) {
-            selectedFile = this.files[0];
-            showPreview(selectedFile);
-        }
-    });
-
-    // Drag & Drop functionality
-    dropArea.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        dropArea.classList.add('dragover');
-    });
-
-    dropArea.addEventListener('dragleave', () => {
-        dropArea.classList.remove('dragover');
-    });
-
-    dropArea.addEventListener('drop', (e) => {
-        e.preventDefault();
-        dropArea.classList.remove('dragover');
-        const file = e.dataTransfer.files[0];
-        if (file && file.type.startsWith('image/')) {
-            selectedFile = file;
-            showPreview(selectedFile);
-        } else {
-            alert('Please drop a valid image file.');
-        }
-    });
-
-    // Clipboard paste support
-    document.addEventListener('paste', (e) => {
-        const items = e.clipboardData.items;
-        for (const item of items) {
-            if (item.type.startsWith('image/')) {
-                const file = item.getAsFile();
-                selectedFile = file;
-                showPreview(selectedFile);
-                break;
-            }
-        }
-    });
-
-    // Predict button handler
-    predictButton.addEventListener('click', function () {
-        if (!selectedFile) {
-            alert("Please select, drop, or paste an image first!");
-            return;
-        }
-
-        resultDiv.innerHTML = 'Classifying... 🤔';
-
-        const formData = new FormData();
-        formData.append('file', selectedFile);
-
-        // This fetch call assumes a Flask backend at '/predict'.
-        // For a pure HTML/CSS demo, this would cause an error.
-        // It's kept here to show the original functionality.
-        fetch('/predict', {
-            method: 'POST',
-            body: formData
-        })
-            .then(response => response.json())
-            .then(data => {
-                if (data.error) {
-                    resultDiv.innerHTML = `<span class="error">Error: ${data.error}</span>`;
-                } else {
-                    resultDiv.innerHTML = `Prediction: <strong>${data.prediction}</strong> <br> Confidence: ${data.confidence}`;
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Smart Waste Classifier ♻️</title>
+        <link
+            rel="stylesheet"
+            href="{{ url_for('static', filename='styles.css') }}"
+        />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap"
+            rel="stylesheet"
+        />
+        <style>
+            @keyframes rotate {
+                from {
+                    transform: rotate(0deg);
                 }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                resultDiv.innerHTML = `<span class="error">An error occurred. See console for details.</span>`;
-                // For demonstration purposes without a backend:
-                resultDiv.innerHTML = `Prediction: <strong>Organic</strong> <br> Confidence: 92%`;
+                to {
+                    transform: rotate(360deg);
+                }
+            }
+            .rotate {
+                display: inline-block;
+                animation: rotate 2s linear infinite;
+            }
+            .stylish-heading {
+                font-size: 3.5em;
+                text-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+                letter-spacing: 2px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1 class="stylish-heading">
+                Smart Waste Classifier <span class="rotate">♻️</span>
+            </h1>
+            <p>Upload, Drag & Drop, or Paste an image to classify.</p>
+
+            <div class="classifier-box">
+                <input type="file" id="imageUpload" accept="image/*" hidden />
+                <label for="imageUpload" class="upload-button"
+                    >Choose Image</label
+                >
+
+                <div id="dropArea" class="drop-area">
+                    <p>Drag & Drop or Paste an Image Here 📸</p>
+                </div>
+
+                <div
+                    id="imagePreviewContainer"
+                    class="image-preview-container"
+                    style="display: none"
+                >
+                    <img
+                        id="imagePreview"
+                        src="#"
+                        alt="Image Preview"
+                        class="image-preview"
+                    />
+                </div>
+
+                <button id="predictButton">Classify</button>
+
+                <div id="result" class="result"></div>
+            </div>
+        </div>
+
+        <script>
+            const imageUpload = document.getElementById("imageUpload");
+            const imagePreview = document.getElementById("imagePreview");
+            const imagePreviewContainer = document.getElementById(
+                "imagePreviewContainer",
+            );
+            const predictButton = document.getElementById("predictButton");
+            const resultDiv = document.getElementById("result");
+            const dropArea = document.getElementById("dropArea");
+
+            let selectedFile = null;
+
+            // Helper: Preview the image
+            function showPreview(file) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    imagePreview.src = e.target.result;
+                    imagePreviewContainer.style.display = "block";
+                    resultDiv.innerHTML = "";
+                };
+                reader.readAsDataURL(file);
+            }
+
+            // Handle standard file selection
+            imageUpload.addEventListener("change", function () {
+                if (this.files && this.files[0]) {
+                    selectedFile = this.files[0];
+                    showPreview(selectedFile);
+                }
             });
-    });
-</script>
-</body>
+
+            // Drag & Drop functionality
+            dropArea.addEventListener("dragover", (e) => {
+                e.preventDefault();
+                dropArea.classList.add("dragover");
+            });
+
+            dropArea.addEventListener("dragleave", () => {
+                dropArea.classList.remove("dragover");
+            });
+
+            dropArea.addEventListener("drop", (e) => {
+                e.preventDefault();
+                dropArea.classList.remove("dragover");
+                const file = e.dataTransfer.files[0];
+                if (file && file.type.startsWith("image/")) {
+                    selectedFile = file;
+                    showPreview(selectedFile);
+                } else {
+                    alert("Please drop a valid image file.");
+                }
+            });
+
+            // Clipboard paste support
+            document.addEventListener("paste", (e) => {
+                const items = e.clipboardData.items;
+                for (const item of items) {
+                    if (item.type.startsWith("image/")) {
+                        const file = item.getAsFile();
+                        selectedFile = file;
+                        showPreview(selectedFile);
+                        break;
+                    }
+                }
+            });
+
+            // Predict button handler
+            predictButton.addEventListener("click", function () {
+                if (!selectedFile) {
+                    alert("Please select, drop, or paste an image first!");
+                    return;
+                }
+
+                resultDiv.innerHTML = "Classifying... 🤔";
+
+                const formData = new FormData();
+                formData.append("file", selectedFile);
+
+                // This fetch call assumes a Flask backend at '/predict'.
+                // For a pure HTML/CSS demo, this would cause an error.
+                // It's kept here to show the original functionality.
+                fetch("/predict", {
+                    method: "POST",
+                    body: formData,
+                })
+                    .then((response) => response.json())
+                    .then((data) => {
+                        if (data.error) {
+                            resultDiv.innerHTML = `<span class="error">Error: ${data.error}</span>`;
+                        } else {
+                            resultDiv.innerHTML = `Prediction: <strong>${data.prediction}</strong> <br> Confidence: ${data.confidence}`;
+                        }
+                    })
+                    .catch((error) => {
+                        console.error("Error:", error);
+                        resultDiv.innerHTML = `<span class="error">An error occurred. See console for details.</span>`;
+                        // For demonstration purposes without a backend:
+                        resultDiv.innerHTML = `Prediction: <strong>Organic</strong> <br> Confidence: 92%`;
+                    });
+            });
+        </script>
+    </body>
 </html>
